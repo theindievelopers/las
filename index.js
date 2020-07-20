@@ -22,6 +22,7 @@ import Employee from "./models/employee";
 
 import express from "express";
 import helmet from "helmet";
+import bodyParser from "body-parser";
 
 const app = express(helmet());
 
@@ -35,23 +36,56 @@ app.disable("X-Content-Type-Options");
 app.disable("X-Frame-Options");
 app.disable("X-XSS-Protection");
 
+app.use(
+  bodyParser.urlencoded({
+    extended: true,
+  })
+);
+app.use(bodyParser.json());
+
 app.get("/employees", (req, res) => {
   Employee.findAll({}).then((employees) => {
     let employeeList = JSON.parse(JSON.stringify(employees));
-    return res.send(employeeList);
+    return res.json(employeeList);
   });
 });
 
-app.post("/", (req, res) => {
-  return res.send("Received a POST HTTP method");
+app.post("/employees", (req, res) => {
+  Employee.create({ ...req.body })
+    .then((data) => {
+      res.send({ success: true, data: data });
+    })
+    .catch((err) => res.send({ success: false, error: err.message }));
 });
 
-app.put("/", (req, res) => {
-  return res.send("Received a PUT HTTP method");
+app.put("/employees", (req, res) => {
+  Employee.findOne({ where: { id: req.query.id } })
+    .then((employee) => {
+      if (employee) {
+        employee
+          .update({ where: { id: employee.id }, ...req.body })
+          .then((data) => {
+            res.send({ success: true, data: data });
+          })
+          .catch((err) => {
+            res.send({ success: false, error: err });
+          });
+      } else {
+        res.send({
+          success: false,
+          error: `Object reference id ${req.query.id} not found.`,
+        });
+      }
+    })
+    .catch((err) => {
+      res.send({ success: false, error: err });
+    });
 });
 
-app.delete("/", (req, res) => {
-  return res.send("Received a DELETE HTTP method");
+app.delete("/employee", (req, res) => {
+  return res.send({success: false, error: 'DELETE not implemented yet!'});
 });
 
-app.listen(3000, () => console.log(`Example app listening on port 3000`));
+app.listen(3000, () =>
+  console.log(`Leave Approval System Applciation is running on port 3000`)
+);

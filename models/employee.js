@@ -17,10 +17,12 @@ const Employee = sequelize.define(
       type: DataTypes.INTEGER,
       primaryKey: true,
       allowNull: false,
+      autoIncrement: true,
     },
     code: {
       type: DataTypes.STRING,
       allowNull: false,
+      unique: true,
     },
     fname: {
       type: DataTypes.STRING,
@@ -146,7 +148,7 @@ const Employee = sequelize.define(
     },
     recruited_by: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     accommodation: {
       type: DataTypes.STRING,
@@ -166,13 +168,15 @@ const Employee = sequelize.define(
     },
     createdAt: {
       type: DataTypes.DATE,
+      defaultValue: Sequelize.NOW,
     },
-    createdBy: {
+    updatedBy: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    createdAt: {
+    updatedAt: {
       type: DataTypes.DATE,
+      defaultValue: Sequelize.NOW,
     },
   },
   {
