@@ -19,6 +19,7 @@
 //   });
 
 import Employee from "./models/employee";
+import Application from "./models/application";
 
 import express from "express";
 import helmet from "helmet";
@@ -43,8 +44,11 @@ app.use(
 );
 app.use(bodyParser.json());
 
+/**
+ * Employees
+ */
 app.get("/employees", (req, res) => {
-  Employee.findAll({}).then((employees) => {
+  Application.findAll({}).then((employees) => {
     let employeeList = JSON.parse(JSON.stringify(employees));
     return res.json(employeeList);
   });
@@ -82,8 +86,57 @@ app.put("/employees", (req, res) => {
     });
 });
 
-app.delete("/employee", (req, res) => {
-  return res.send({success: false, error: 'DELETE not implemented yet!'});
+app.delete("/employees", (req, res) => {
+  return res.send({ success: false, error: "DELETE not implemented yet!" });
+});
+
+/**
+ * Application
+ */
+app.get("/application", (req, res) => {
+  Application.findAll({}).then((application) => {
+    let applicationList = JSON.parse(JSON.stringify(application));
+    return res.json(applicationList);
+  });
+});
+
+app.post("/application", (req, res) => {
+  let data = { ...req.body };
+  data.application_data = JSON.stringify(data.application_data);
+  console.log(data)
+  Application.create(data)
+    .then((data) => {
+      res.send({ success: true, data: data });
+    })
+    .catch((err) => res.send({ success: false, error: err.message }));
+});
+
+app.put("/application", (req, res) => {
+  Application.findOne({ where: { id: req.query.id } })
+    .then((application) => {
+      if (application) {
+        application
+          .update({ where: { id: application.id }, ...req.body })
+          .then((data) => {
+            res.send({ success: true, data: data });
+          })
+          .catch((err) => {
+            res.send({ success: false, error: err });
+          });
+      } else {
+        res.send({
+          success: false,
+          error: `Object reference id ${req.query.id} not found.`,
+        });
+      }
+    })
+    .catch((err) => {
+      res.send({ success: false, error: err });
+    });
+});
+
+app.delete("/application", (req, res) => {
+  return res.send({ success: false, error: "DELETE not implemented yet!" });
 });
 
 app.listen(3000, () =>
