@@ -1,25 +1,6 @@
-// import Staff from "./models/staff";
-// import Designation from "./models/designation";
-
-// Designation.findAll({})
-//   .then((designations) => {
-//     let designationCodes = JSON.parse(JSON.stringify(designations)).map((o) => {
-//       return { id: o.id, code: o.code };
-//     });
-//     return designationCodes;
-//   })
-//   .then((des) => {
-//     Staff.findAll({ where: { status: 1 } }).then((staffs) => {
-//       staffs.map((s) => {
-//         let data = JSON.parse(JSON.stringify(s));
-//         data.designation = "a";
-//         console.log(data);
-//       });
-//     });
-//   });
-
 import Employee from "./models/employee";
 import Application from "./models/application";
+import ImageUtility from "./utilities/image";
 
 import express from "express";
 import helmet from "helmet";
@@ -45,10 +26,19 @@ app.use(
 app.use(bodyParser.json());
 
 /**
+ * Test endpoint only
+ */
+
+app.get("/test", (req, res) => {
+  let f = "C:\\Users\\raihan\\Pictures\\COTDG\\game-bg-1.jpg";
+  let result = ImageUtility.toBase64(f);
+  return res.send(result);
+});
+/**
  * Employees
  */
-app.get("/employees", (req, res) => {
-  Application.findAll({}).then((employees) => {
+app.get("/employee", (req, res) => {
+  Employee.findAll({ where: { ...req.query } }).then((employees) => {
     let employeeList = JSON.parse(JSON.stringify(employees));
     return res.json(employeeList);
   });
@@ -94,8 +84,11 @@ app.delete("/employees", (req, res) => {
  * Application
  */
 app.get("/application", (req, res) => {
-  Application.findAll({}).then((application) => {
+  Application.findAll({ where: { ...req.query } }).then((application) => {
     let applicationList = JSON.parse(JSON.stringify(application));
+    applicationList.map((application) => {
+      application.application_data = JSON.parse(application.application_data);
+    });
     return res.json(applicationList);
   });
 });
@@ -103,7 +96,6 @@ app.get("/application", (req, res) => {
 app.post("/application", (req, res) => {
   let data = { ...req.body };
   data.application_data = JSON.stringify(data.application_data);
-  console.log(data)
   Application.create(data)
     .then((data) => {
       res.send({ success: true, data: data });
