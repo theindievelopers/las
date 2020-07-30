@@ -10,8 +10,8 @@ var sequelize = new Sequelize("BOOMDB", "root", "Qwer1234", {
   },
 });
 
-const Staff = sequelize.define(
-  "staff",
+const Users = sequelize.define(
+  "users",
   {
     id: {
       type: DataTypes.INTEGER,
@@ -56,4 +56,4 @@ const Staff = sequelize.define(
   }
 );
 
-export default Staff;
+export default Users;

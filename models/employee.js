@@ -162,6 +162,10 @@ const Employee = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    signature: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     createdBy: {
       type: DataTypes.STRING,
       allowNull: false,

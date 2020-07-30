@@ -1,28 +1,13 @@
-// import Staff from "./models/staff";
-// import Designation from "./models/designation";
-
-// Designation.findAll({})
-//   .then((designations) => {
-//     let designationCodes = JSON.parse(JSON.stringify(designations)).map((o) => {
-//       return { id: o.id, code: o.code };
-//     });
-//     return designationCodes;
-//   })
-//   .then((des) => {
-//     Staff.findAll({ where: { status: 1 } }).then((staffs) => {
-//       staffs.map((s) => {
-//         let data = JSON.parse(JSON.stringify(s));
-//         data.designation = "a";
-//         console.log(data);
-//       });
-//     });
-//   });
-
 import Employee from "./models/employee";
+import Application from "./models/application";
+import ImageUtility from "./utilities/image";
 
 import express from "express";
 import helmet from "helmet";
 import bodyParser from "body-parser";
+
+var multer = require("multer");
+var signature = multer({ dest: "uploads/signature" });
 
 const app = express(helmet());
 
@@ -43,8 +28,65 @@ app.use(
 );
 app.use(bodyParser.json());
 
-app.get("/employees", (req, res) => {
-  Employee.findAll({}).then((employees) => {
+/**
+ * Fetch signature image to base64
+ */
+app.get("/fetch/signature", (req, res) => {
+  try {
+    Employee.findAll({ where: { ...req.query } })
+      .then((employees) => {
+        let employee = JSON.parse(JSON.stringify(employees));
+        if (employee.length > 0) {
+          let result = ImageUtility.toBase64(`${employee[0].signature}`);
+          return res.send({ success: false, data: result });
+        }
+      })
+      .catch((err) => {
+        return res.send({ success: false, message: "Record not found!" });
+      });
+  } catch (err) {
+    console.log("error out");
+    return res.send({ success: false, message: err.message });
+  }
+});
+
+/**
+ * Upload signature
+ */
+app.post("/upload/signature", signature.single("upload_image"), (req, res) => {
+  if (req.file && req.file.filename) {
+    Employee.findOne({ where: { id: req.query.id } })
+      .then((employee) => {
+        if (employee) {
+          employee
+            .update(
+              { signature: req.file.path },
+              { where: { id: employee.id } }
+            )
+            .then((data) => {
+              res.send({ success: true, data: data });
+            })
+            .catch((err) => {
+              res.send({ success: false, error: err });
+            });
+        } else {
+          res.send({
+            success: false,
+            error: `Object reference id ${req.query.id} not found.`,
+          });
+        }
+      })
+      .catch((err) => {
+        res.send({ success: false, error: err });
+      });
+  }
+});
+
+/**
+ * Employees
+ */
+app.get("/employee", (req, res) => {
+  Employee.findAll({ where: { ...req.query } }).then((employees) => {
     let employeeList = JSON.parse(JSON.stringify(employees));
     return res.json(employeeList);
   });
@@ -63,7 +105,7 @@ app.put("/employees", (req, res) => {
     .then((employee) => {
       if (employee) {
         employee
-          .update({ where: { id: employee.id }, ...req.body })
+          .update(...req.body, { where: { id: employee.id } })
           .then((data) => {
             res.send({ success: true, data: data });
           })
@@ -82,8 +124,59 @@ app.put("/employees", (req, res) => {
     });
 });
 
-app.delete("/employee", (req, res) => {
-  return res.send({success: false, error: 'DELETE not implemented yet!'});
+app.delete("/employees", (req, res) => {
+  return res.send({ success: false, error: "DELETE not implemented yet!" });
+});
+
+/**
+ * Application
+ */
+app.get("/application", (req, res) => {
+  Application.findAll({ where: { ...req.query } }).then((application) => {
+    let applicationList = JSON.parse(JSON.stringify(application));
+    applicationList.map((application) => {
+      application.application_data = JSON.parse(application.application_data);
+    });
+    return res.json(applicationList);
+  });
+});
+
+app.post("/application", (req, res) => {
+  let data = { ...req.body };
+  data.application_data = JSON.stringify(data.application_data);
+  Application.create(data)
+    .then((data) => {
+      res.send({ success: true, data: data });
+    })
+    .catch((err) => res.send({ success: false, error: err.message }));
+});
+
+app.put("/application", (req, res) => {
+  Application.findOne({ where: { id: req.query.id } })
+    .then((application) => {
+      if (application) {
+        application
+          .update(...req.body, { where: { id: application.id } })
+          .then((data) => {
+            res.send({ success: true, data: data });
+          })
+          .catch((err) => {
+            res.send({ success: false, error: err });
+          });
+      } else {
+        res.send({
+          success: false,
+          error: `Object reference id ${req.query.id} not found.`,
+        });
+      }
+    })
+    .catch((err) => {
+      res.send({ success: false, error: err });
+    });
+});
+
+app.delete("/application", (req, res) => {
+  return res.send({ success: false, error: "DELETE not implemented yet!" });
 });
 
 app.listen(3000, () =>
