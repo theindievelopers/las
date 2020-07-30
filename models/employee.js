@@ -163,7 +163,7 @@ const Employee = sequelize.define(
       allowNull: false,
     },
     signature: {
-      type: DataTypes.BLOB,
+      type: DataTypes.STRING,
       allowNull: true,
     },
     createdBy: {

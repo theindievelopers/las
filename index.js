@@ -6,6 +6,9 @@ import express from "express";
 import helmet from "helmet";
 import bodyParser from "body-parser";
 
+var multer = require("multer");
+var signature = multer({ dest: "uploads/signature" });
+
 const app = express(helmet());
 
 app.disable("x-powered-by");
@@ -26,14 +29,56 @@ app.use(
 app.use(bodyParser.json());
 
 /**
- * Test endpoint only
+ * Fetch signature image to base64
  */
-
-app.get("/test", (req, res) => {
-  let f = "C:\\Users\\raihan\\Pictures\\COTDG\\game-bg-1.jpg";
-  let result = ImageUtility.toBase64(f);
-  return res.send(result);
+app.get("/fetch/signature", (req, res) => {
+  try {
+    Employee.findAll({ where: { ...req.query } }).then((employees) => {
+      let employee = JSON.parse(JSON.stringify(employees));
+      if (employee.length > 0) {
+        let result = ImageUtility.toBase64(`${employee[0].signature}`);
+        res.send({ success: false, data: result });
+      } else {
+        return res.send({ success: false, message: "Record not found!" });
+      }
+    });
+  } catch (err) {
+    return res.send({ success: false, message: err.message });
+  }
 });
+
+/**
+ * Upload signature
+ */
+app.post("/upload/signature", signature.single("upload_image"), (req, res) => {
+  if (req.file && req.file.filename) {
+    Employee.findOne({ where: { id: req.query.id } })
+      .then((employee) => {
+        if (employee) {
+          employee
+            .update(
+              { signature: req.file.path },
+              { where: { id: employee.id } }
+            )
+            .then((data) => {
+              res.send({ success: true, data: data });
+            })
+            .catch((err) => {
+              res.send({ success: false, error: err });
+            });
+        } else {
+          res.send({
+            success: false,
+            error: `Object reference id ${req.query.id} not found.`,
+          });
+        }
+      })
+      .catch((err) => {
+        res.send({ success: false, error: err });
+      });
+  }
+});
+
 /**
  * Employees
  */
@@ -57,7 +102,7 @@ app.put("/employees", (req, res) => {
     .then((employee) => {
       if (employee) {
         employee
-          .update({ where: { id: employee.id }, ...req.body })
+          .update(...req.body, { where: { id: employee.id } })
           .then((data) => {
             res.send({ success: true, data: data });
           })
@@ -108,7 +153,7 @@ app.put("/application", (req, res) => {
     .then((application) => {
       if (application) {
         application
-          .update({ where: { id: application.id }, ...req.body })
+          .update(...req.body, { where: { id: application.id } })
           .then((data) => {
             res.send({ success: true, data: data });
           })
