@@ -33,16 +33,19 @@ app.use(bodyParser.json());
  */
 app.get("/fetch/signature", (req, res) => {
   try {
-    Employee.findAll({ where: { ...req.query } }).then((employees) => {
-      let employee = JSON.parse(JSON.stringify(employees));
-      if (employee.length > 0) {
-        let result = ImageUtility.toBase64(`${employee[0].signature}`);
-        res.send({ success: false, data: result });
-      } else {
+    Employee.findAll({ where: { ...req.query } })
+      .then((employees) => {
+        let employee = JSON.parse(JSON.stringify(employees));
+        if (employee.length > 0) {
+          let result = ImageUtility.toBase64(`${employee[0].signature}`);
+          return res.send({ success: false, data: result });
+        }
+      })
+      .catch((err) => {
         return res.send({ success: false, message: "Record not found!" });
-      }
-    });
+      });
   } catch (err) {
+    console.log("error out");
     return res.send({ success: false, message: err.message });
   }
 });
