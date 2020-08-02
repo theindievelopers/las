@@ -5,11 +5,16 @@ import ImageUtility from "./utilities/image";
 import express from "express";
 import helmet from "helmet";
 import bodyParser from "body-parser";
+import cors from "cors";
 
 var multer = require("multer");
 var signature = multer({ dest: "uploads/signature" });
 
+
 const app = express(helmet());
+
+
+app.use(cors())
 
 app.disable("x-powered-by");
 app.disable("X-Content-Type-Options");
@@ -27,6 +32,10 @@ app.use(
   })
 );
 app.use(bodyParser.json());
+
+// will make the uploaded files accessible
+const path = require('path');
+app.use(express.static(path.join(__dirname, 'uploads')))
 
 /**
  * Fetch signature image to base64
@@ -85,6 +94,21 @@ app.post("/upload/signature", signature.single("upload_image"), (req, res) => {
 /**
  * Employees
  */
+
+// this will set the location of the uploaded file
+let storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    // 'uploads/signature' - FILE SAVING DESTINATION
+    cb(null, 'uploads/signature')
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + "-" + file.originalname)
+  }
+})
+
+// will call multer
+const upload = multer({storage})
+
 app.get("/employee", (req, res) => {
   Employee.findAll({ where: { ...req.query } }).then((employees) => {
     let employeeList = JSON.parse(JSON.stringify(employees));
@@ -92,8 +116,15 @@ app.get("/employee", (req, res) => {
   });
 });
 
-app.post("/employees", (req, res) => {
-  Employee.create({ ...req.body })
+app.post("/employees", upload.single('signature'), (req, res) => {
+  let imagepath =""
+  if(req.file) {
+    imagepath = "signature/" + req.file.filename
+  } else {
+    res.status("409").json('No File to uploads');
+  }
+
+  Employee.create({ ...req.body, signature: imagepath })
     .then((data) => {
       res.send({ success: true, data: data });
     })
