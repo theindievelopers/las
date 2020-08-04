@@ -57,7 +57,6 @@ app.get("/fetch/signature", (req, res) => {
         return res.send({ success: false, message: "Record not found!" });
       });
   } catch (err) {
-    console.log("error out");
     return res.send({ success: false, message: err.message });
   }
 });
