@@ -31,6 +31,9 @@ app.use(
 );
 app.use(bodyParser.json());
 
+const path = require('path');
+app.use(express.static(path.join(__dirname, 'uploads')))
+
 /**
  * Fetch signature image to base64
  */
@@ -39,6 +42,7 @@ app.get("/fetch/signature", (req, res) => {
     Employee.findAll({ where: { ...req.query } })
       .then((employees) => {
         let employee = JSON.parse(JSON.stringify(employees));
+        console.log("EMPLOYEE",employee)
         if (employee.length > 0) {
           res.set({ "Content-Type": "image/png" });
           res.sendFile(__dirname + "\\" + `${employee[0].signature}`);
