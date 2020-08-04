@@ -23,7 +23,6 @@ app.disable("X-Frame-Options");
 app.disable("X-XSS-Protection");
 
 app.use(cors());
-app.use(express.static("/uploads"));
 
 app.use(
   bodyParser.urlencoded({
