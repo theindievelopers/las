@@ -5,11 +5,16 @@ import ImageUtility from "./utilities/image";
 import express from "express";
 import helmet from "helmet";
 import bodyParser from "body-parser";
+import cors from "cors";
 
 var multer = require("multer");
 var signature = multer({ dest: "uploads/signature" });
 
+
 const app = express(helmet());
+
+
+app.use(cors())
 
 app.disable("x-powered-by");
 app.disable("X-Content-Type-Options");
@@ -21,12 +26,17 @@ app.disable("X-Content-Type-Options");
 app.disable("X-Frame-Options");
 app.disable("X-XSS-Protection");
 
+app.use(cors());
+
 app.use(
   bodyParser.urlencoded({
     extended: true,
   })
 );
 app.use(bodyParser.json());
+
+const path = require('path');
+app.use(express.static(path.join(__dirname, 'uploads')))
 
 /**
  * Fetch signature image to base64
@@ -36,12 +46,14 @@ app.get("/fetch/signature", (req, res) => {
     Employee.findAll({ where: { ...req.query } })
       .then((employees) => {
         let employee = JSON.parse(JSON.stringify(employees));
+        console.log("EMPLOYEE",employee)
         if (employee.length > 0) {
-          let result = ImageUtility.toBase64(`${employee[0].signature}`);
-          return res.send({ success: false, data: result });
+          res.set({ "Content-Type": "image/png" });
+          res.sendFile(__dirname + "\\" + `${employee[0].signature}`);
         }
       })
       .catch((err) => {
+        console.log("Error Signature", err)
         return res.send({ success: false, message: "Record not found!" });
       });
   } catch (err) {
