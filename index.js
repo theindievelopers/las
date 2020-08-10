@@ -107,7 +107,7 @@ app.put("/employees", (req, res) => {
     .then((employee) => {
       if (employee) {
         employee
-          .update(...req.body, { where: { id: employee.id } })
+          .update({ ...req.body }, { where: { id: employee.id } })
           .then((data) => {
             res.send({ success: true, data: data });
           })
@@ -154,11 +154,13 @@ app.post("/application", (req, res) => {
 });
 
 app.put("/application", (req, res) => {
+  let data = { ...req.body };
+  data.application_data = JSON.stringify(data.application_data);
   Application.findOne({ where: { id: req.query.id } })
     .then((application) => {
       if (application) {
         application
-          .update(...req.body, { where: { id: application.id } })
+          .update(data, { where: { id: application.id } })
           .then((data) => {
             res.send({ success: true, data: data });
           })
