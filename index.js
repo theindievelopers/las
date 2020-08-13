@@ -97,7 +97,10 @@ app.get("/employee", (req, res) => {
 });
 
 app.post("/employees", (req, res) => {
-  Employee.create({ ...req.body })
+  let data = { ...req.body };
+  data.createdAt = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+  data.updatedAt = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+  Employee.create(data)
     .then((data) => {
       res.send({ success: true, data: data });
     })
@@ -147,6 +150,8 @@ app.get("/application", (req, res) => {
 
 app.post("/application", (req, res) => {
   let data = { ...req.body };
+  data.createdAt = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+  data.updatedAt = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
   data.application_data = JSON.stringify(data.application_data);
   Application.create(data)
     .then((data) => {
@@ -198,7 +203,7 @@ app.get("/approvals", (req, res) => {
 app.post("/approvals", (req, res) => {
   let data = { ...req.body };
   data.createdAt = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
-  data.updatedAT = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+  data.updatedAt = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
   Approvals.create(data)
     .then((data) => {
       res.send({ success: true, data: data });
@@ -207,12 +212,13 @@ app.post("/approvals", (req, res) => {
 });
 
 app.put("/approvals", (req, res) => {
-  let { status } = { ...req.body }; //only use status for update
+  let { status, updatedAt } = { ...req.body }; //only use status for update
+  updatedAt = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
   Approvals.findOne({ where: { id: req.query.id } })
     .then((approval) => {
       if (approval) {
         approval
-          .update({ status }, { where: { id: approval.id } })
+          .update({ status, updatedAt }, { where: { id: approval.id } })
           .then((data) => {
             res.send({ success: true, data: data });
           })
