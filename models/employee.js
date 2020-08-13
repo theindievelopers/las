@@ -24,15 +24,7 @@ const Employee = sequelize.define(
       allowNull: false,
       unique: true,
     },
-    fname: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    mname: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    lname: {
+    fullname: {
       type: DataTypes.STRING,
       allowNull: false,
     },
@@ -163,6 +155,14 @@ const Employee = sequelize.define(
       allowNull: false,
     },
     signature: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    project_manager: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    immediate_superior: {
       type: DataTypes.STRING,
       allowNull: true,
     },

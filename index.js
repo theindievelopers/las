@@ -1,6 +1,8 @@
+import moment from "moment";
+
 import Employee from "./models/employee";
 import Application from "./models/application";
-import ImageUtility from "./utilities/image";
+import Approvals from "./models/approvals";
 
 import express from "express";
 import helmet from "helmet";
@@ -95,7 +97,10 @@ app.get("/employee", (req, res) => {
 });
 
 app.post("/employees", (req, res) => {
-  Employee.create({ ...req.body })
+  let data = { ...req.body };
+  data.createdAt = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+  data.updatedAt = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+  Employee.create(data)
     .then((data) => {
       res.send({ success: true, data: data });
     })
@@ -145,6 +150,8 @@ app.get("/application", (req, res) => {
 
 app.post("/application", (req, res) => {
   let data = { ...req.body };
+  data.createdAt = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+  data.updatedAt = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
   data.application_data = JSON.stringify(data.application_data);
   Application.create(data)
     .then((data) => {
@@ -181,6 +188,53 @@ app.put("/application", (req, res) => {
 
 app.delete("/application", (req, res) => {
   return res.send({ success: false, error: "DELETE not implemented yet!" });
+});
+
+/**
+ * Approvals
+ */
+app.get("/approvals", (req, res) => {
+  Approvals.findAll({ where: { ...req.query } }).then((approvals) => {
+    let approvalsList = JSON.parse(JSON.stringify(approvals));
+    return res.json(approvalsList);
+  });
+});
+
+app.post("/approvals", (req, res) => {
+  let data = { ...req.body };
+  data.createdAt = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+  data.updatedAt = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+  Approvals.create(data)
+    .then((data) => {
+      res.send({ success: true, data: data });
+    })
+    .catch((err) => res.send({ success: false, error: err.message }));
+});
+
+app.put("/approvals", (req, res) => {
+  let { status, updatedAt } = { ...req.body }; //only use status for update
+  updatedAt = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+  Approvals.findOne({ where: { id: req.query.id } })
+    .then((approval) => {
+      if (approval) {
+        approval
+          .update({ status, updatedAt }, { where: { id: approval.id } })
+          .then((data) => {
+            res.send({ success: true, data: data });
+          })
+          .catch((err) => {
+            res.send({ success: false, error: err });
+          });
+      } else {
+        res.send({
+          success: false,
+          error: `Object reference id ${req.query.id} not found.`,
+        });
+      }
+    })
+    .catch((err) => {
+      res.send({ success: false, error: err });
+    });
 });
 
 app.listen(3000, () =>
