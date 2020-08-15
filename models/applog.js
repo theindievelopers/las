@@ -10,40 +10,29 @@ var sequelize = new Sequelize("BOOMDB", "root", "Qwer1234", {
   },
 });
 
-const Users = sequelize.define(
-  "users",
+const Logs = sequelize.define(
+  "logs",
   {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
+      autoIncrement: true,
       allowNull: false,
     },
-    fullname: {
+    log_type: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    designation: {
+    collateid: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV1,
+    },
+    data: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    username: {
+    application_source: {
       type: DataTypes.STRING,
-      allowNull: false,
-    },
-    password: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    status: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    createdBy: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    createdAt: {
-      type: DataTypes.DATE,
       allowNull: false,
     },
     createdBy: {
@@ -60,4 +49,4 @@ const Users = sequelize.define(
   }
 );
 
-export default Users;
+export default Logs;
