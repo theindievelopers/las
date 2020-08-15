@@ -188,14 +188,13 @@ app.get("/employee", (req, res) => {
 
 app.post("/employees", (req, res) => {
   let data = { ...req.body };
-  data.collateid = uuidv4();
   data.createdAt = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
   data.updatedAt = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
   Employee.create(data)
     .then((data) => {
       createLog(
         "CREATEEMPLOYEE",
-        data.collateid,
+        `CREATEEMPLOYEESUCCESS-${req.query.id || 'IDNOTFOUND'}`,
         JSON.stringify(data),
         "LAS",
         "raihan"
@@ -205,7 +204,7 @@ app.post("/employees", (req, res) => {
     .catch((err) => {
       createLog(
         "CREATEEMPLOYEE",
-        data.collateid,
+        `CREATEEMPLOYEEFAILED-${req.query.id || 'IDNOTFOUND'}`,
         JSON.stringify(err),
         "LAS",
         "raihan"
