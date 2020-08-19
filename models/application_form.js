@@ -1,5 +1,5 @@
 const { Sequelize, DataTypes } = require("sequelize");
-var sequelize = new Sequelize("BOOMDB", "root", "Qwer1234", {
+var sequelize = new Sequelize("boomdb", "root", "Qwer1234", {
   host: "localhost",
   port: 3307,
   dialect: "mysql",
@@ -10,36 +10,19 @@ var sequelize = new Sequelize("BOOMDB", "root", "Qwer1234", {
   },
 });
 
-const Users = sequelize.define(
-  "users",
+const ApplicationForm = sequelize.define(
+  "application_form",
   {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       allowNull: false,
+      autoIncrement: true,
     },
-    employeecode: {
+    code: {
       type: DataTypes.STRING,
-      allowNull: false,
     },
-    fullname: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    designation: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    username: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    password: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    accesslevel: { type: DataTypes.INTEGER, allowNull: false },
-    status: {
+    data: {
       type: DataTypes.STRING,
       allowNull: false,
     },
@@ -51,11 +34,11 @@ const Users = sequelize.define(
       type: DataTypes.DATE,
       allowNull: false,
     },
-    createdBy: {
+    updatedBy: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    createdAt: {
+    updatedAt: {
       type: DataTypes.DATE,
       allowNull: false,
     },
@@ -65,4 +48,4 @@ const Users = sequelize.define(
   }
 );
 
-export default Users;
+export default ApplicationForm;

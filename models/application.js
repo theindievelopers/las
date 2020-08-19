@@ -28,8 +28,8 @@ const Application = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    employee_id: {
-      type: DataTypes.INTEGER,
+    employee_code: {
+      type: DataTypes.STRING,
       allowNull: false,
     },
     application_data: {

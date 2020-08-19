@@ -159,11 +159,11 @@ const Employee = sequelize.define(
       allowNull: true,
     },
     project_manager: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING, //employee code
       allowNull: true,
     },
     immediate_superior: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING, //employee code
       allowNull: true,
     },
     createdBy: {
