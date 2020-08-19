@@ -14,6 +14,7 @@ import Application from "./models/application";
 import Approvals from "./models/approvals";
 import Logs from "./models/applog";
 import Users from "./models/users";
+import ApplicationForm from "./models/application_form";
 
 import express from "express";
 import helmet from "helmet";
@@ -60,7 +61,7 @@ app.get("/fetch/signature", (req, res) => {
       .catch((err) => {
         createLog(
           "FETCHSIGNATURE",
-          `FETCHSIGNATUREFAILED-${req.query.id || 'IDNOTFOUND'}`,
+          `FETCHSIGNATUREFAILED-${req.query.id || "IDNOTFOUND"}`,
           JSON.stringify({ ...req.query }),
           "LAS",
           "raihan"
@@ -70,7 +71,7 @@ app.get("/fetch/signature", (req, res) => {
   } catch (err) {
     createLog(
       "FETCHSIGNATURE",
-      `ERROR-${req.query.id || 'IDNOTFOUND'}`,
+      `ERROR-${req.query.id || "IDNOTFOUND"}`,
       JSON.stringify({ ...req.query }),
       "LAS",
       "raihan"
@@ -95,7 +96,7 @@ app.post("/upload/signature", signature.single("upload_image"), (req, res) => {
             .then((data) => {
               createLog(
                 "UPLOADSIGNATURE",
-                `UPLOADSIGNATURESUCCESS-${req.query.id || 'IDNOTFOUND'}`,
+                `UPLOADSIGNATURESUCCESS-${req.query.id || "IDNOTFOUND"}`,
                 JSON.stringify({ ...req.query }),
                 "LAS",
                 "raihan"
@@ -105,7 +106,7 @@ app.post("/upload/signature", signature.single("upload_image"), (req, res) => {
             .catch((err) => {
               createLog(
                 "UPLOADSIGNATURE",
-                `UPLOADSIGNATUREFAILED-${req.query.id || 'IDNOTFOUND'}`,
+                `UPLOADSIGNATUREFAILED-${req.query.id || "IDNOTFOUND"}`,
                 JSON.stringify({ ...req.query }),
                 "LAS",
                 "raihan"
@@ -115,7 +116,7 @@ app.post("/upload/signature", signature.single("upload_image"), (req, res) => {
         } else {
           createLog(
             "UPLOADSIGNATURE",
-            `NOTFOUND-${req.query.id || 'IDNOTFOUND'}`,
+            `NOTFOUND-${req.query.id || "IDNOTFOUND"}`,
             JSON.stringify({ ...req.query }),
             "LAS",
             "raihan"
@@ -129,7 +130,7 @@ app.post("/upload/signature", signature.single("upload_image"), (req, res) => {
       .catch((err) => {
         createLog(
           "UPLOADSIGNATURE",
-          `NOTFOUND-${req.query.id || 'IDNOTFOUND'}`,
+          `NOTFOUND-${req.query.id || "IDNOTFOUND"}`,
           JSON.stringify({ ...req.query }),
           "LAS",
           "raihan"
@@ -162,7 +163,15 @@ app.post("/login", (req, res) => {
         "LAS",
         "raihan"
       );
-      res.send({ success: true });
+      let user = usersList[0];
+      res.send({
+        success: true,
+        data: {
+          fullname: user.fullname,
+          designation: user.designation,
+          accesslvl: user.accesslevel,
+        },
+      });
     } else {
       createLog(
         "LOGIN",
@@ -194,7 +203,7 @@ app.post("/employees", (req, res) => {
     .then((data) => {
       createLog(
         "CREATEEMPLOYEE",
-        `CREATEEMPLOYEESUCCESS-${req.query.id || 'IDNOTFOUND'}`,
+        `CREATEEMPLOYEESUCCESS-${req.query.id || "IDNOTFOUND"}`,
         JSON.stringify(data),
         "LAS",
         "raihan"
@@ -204,7 +213,7 @@ app.post("/employees", (req, res) => {
     .catch((err) => {
       createLog(
         "CREATEEMPLOYEE",
-        `CREATEEMPLOYEEFAILED-${req.query.id || 'IDNOTFOUND'}`,
+        `CREATEEMPLOYEEFAILED-${req.query.id || "IDNOTFOUND"}`,
         JSON.stringify(err),
         "LAS",
         "raihan"
@@ -305,6 +314,21 @@ app.get("/logs", (req, res) => {
 });
 
 /**
+ * ApplicationForm
+ */
+app.get("/applicationform", (req, res) => {
+  ApplicationForm.findAll({ where: { ...req.query } }).then(
+    (applicationForm) => {
+      let applicationFormList = JSON.parse(JSON.stringify(applicationForm));
+      applicationFormList.map((applicationForm) => {
+        applicationForm.data = JSON.parse(applicationForm.data);
+      });
+      return res.json(applicationFormList);
+    }
+  );
+});
+
+/**
  * Application
  */
 app.get("/application", (req, res) => {
@@ -328,11 +352,41 @@ app.post("/application", (req, res) => {
       createLog(
         "CREATEAPPLICATION",
         `CREATEAPPLICATIONSUCCESS-${data.collateid}`,
-        JSON.stringify(err),
+        JSON.stringify(data),
         "LAS",
         "raihan"
       );
-      res.send({ success: true, data: data });
+      return data;
+      //res.send({ success: true, data: data });
+    })
+    .then(() => {
+      // Fetch all reaquired signatories
+      ApplicationForm.findAll({ where: { code: data.application_form_code } })
+        .then((applicationForm) => {
+          let applicationFormList = JSON.parse(JSON.stringify(applicationForm));
+          applicationFormList.map((applicationForm) => {
+            applicationForm.data = JSON.parse(applicationForm.data);
+          });
+          return applicationFormList;
+        })
+        .then((appform) => {
+          let approvers = appform[0].data.approvers;
+          approvers.immediate_supervisor = data.immediate_supervisor;
+          approvers.project_manager = data.project_manager;
+
+          Object.keys(approvers).map((k, v) => {
+            Approvals.create({
+              collateid: data.collateid,
+              approver_id: approvers[k],
+              status: "PENDING",
+              createdBy: "system",
+              updatedBy: "system",
+            });
+          });
+        })
+        .then(() => {
+          res.send(data);
+        });
     })
     .catch((err) => {
       createLog(

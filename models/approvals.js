@@ -25,7 +25,7 @@ const Approvals = sequelize.define(
       primaryKey: true,
     },
     approver_id: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING, //employee code
       allowNull: false,
     },
     status: {
