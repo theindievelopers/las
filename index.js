@@ -167,6 +167,7 @@ app.post("/login", (req, res) => {
       res.send({
         success: true,
         data: {
+          employeecode: user.employeecode,
           fullname: user.fullname,
           designation: user.designation,
           accesslvl: user.accesslevel,
