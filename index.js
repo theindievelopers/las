@@ -371,9 +371,10 @@ app.post("/application", (req, res) => {
           return applicationFormList;
         })
         .then((appform) => {
+          data.application_data = JSON.parse(data.application_data);
           let approvers = appform[0].data.approvers;
-          approvers.immediate_supervisor = data.immediate_supervisor;
-          approvers.project_manager = data.project_manager;
+          approvers.immediate_supervisor = data.application_data.immediate_supervisor;
+          approvers.project_manager = data.application_data.project_manager;
 
           Object.keys(approvers).map((k, v) => {
             Approvals.create({
@@ -552,5 +553,5 @@ app.put("/approvals", (req, res) => {
 });
 
 app.listen(3000, () =>
-  console.log(`Leave Approval System Applciation is running on port 3000`)
+  console.log(`Leave Approval System Application is running on port 3000`)
 );
