@@ -45,6 +45,11 @@ app.use(
 );
 app.use(bodyParser.json());
 
+function currentUser(auth) {
+  let data = Buffer.from(auth.split(" ")[1], "base64").toString().split(":");
+  return { username: data[0], password: data[1] };
+}
+
 /**
  * Fetch signature image to base64
  */
@@ -64,7 +69,7 @@ app.get("/fetch/signature", (req, res) => {
           `FETCHSIGNATUREFAILED-${req.query.id || "IDNOTFOUND"}`,
           JSON.stringify({ ...req.query }),
           "LAS",
-          "raihan"
+          auth && auth.username !== ''  || 'system'
         );
         return res.send({ success: false, message: "Record not found!" });
       });
@@ -74,7 +79,7 @@ app.get("/fetch/signature", (req, res) => {
       `ERROR-${req.query.id || "IDNOTFOUND"}`,
       JSON.stringify({ ...req.query }),
       "LAS",
-      "raihan"
+      auth && auth.username !== '' || 'system'
     );
     return res.send({ success: false, message: err.message });
   }
@@ -84,6 +89,7 @@ app.get("/fetch/signature", (req, res) => {
  * Upload signature
  */
 app.post("/upload/signature", signature.single("upload_image"), (req, res) => {
+  let auth = currentUser(req.headers.authorization);
   if (req.file && req.file.filename) {
     Employee.findOne({ where: { id: req.query.id } })
       .then((employee) => {
@@ -99,7 +105,7 @@ app.post("/upload/signature", signature.single("upload_image"), (req, res) => {
                 `UPLOADSIGNATURESUCCESS-${req.query.id || "IDNOTFOUND"}`,
                 JSON.stringify({ ...req.query }),
                 "LAS",
-                "raihan"
+                auth && auth.username !== '' || 'system'
               );
               res.send({ success: true, data: data });
             })
@@ -109,7 +115,7 @@ app.post("/upload/signature", signature.single("upload_image"), (req, res) => {
                 `UPLOADSIGNATUREFAILED-${req.query.id || "IDNOTFOUND"}`,
                 JSON.stringify({ ...req.query }),
                 "LAS",
-                "raihan"
+                auth && auth.username !== '' || 'system'
               );
               res.send({ success: false, error: err });
             });
@@ -119,7 +125,7 @@ app.post("/upload/signature", signature.single("upload_image"), (req, res) => {
             `NOTFOUND-${req.query.id || "IDNOTFOUND"}`,
             JSON.stringify({ ...req.query }),
             "LAS",
-            "raihan"
+            auth && auth.username !== '' || 'system'
           );
           res.send({
             success: false,
@@ -133,7 +139,7 @@ app.post("/upload/signature", signature.single("upload_image"), (req, res) => {
           `NOTFOUND-${req.query.id || "IDNOTFOUND"}`,
           JSON.stringify({ ...req.query }),
           "LAS",
-          "raihan"
+          auth && auth.username !== '' || 'system'
         );
         res.send({ success: false, error: err });
       });
@@ -144,14 +150,45 @@ app.post("/upload/signature", signature.single("upload_image"), (req, res) => {
  * Users
  */
 app.post("/users", (req, res) => {
-  //TODO: Need admin authentication
   Users.findAll({ where: { ...req.query } }).then((user) => {
     let uersList = JSON.parse(JSON.stringify(user));
     return res.json(uersList);
   });
 });
 
+app.post("/users/create", (req, res) => {
+  let auth = currentUser(req.headers.authorization);
+  let data = { ...req.body };
+  data.createdAt = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+  data.updatedAt = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+  Users.create(data)
+    .then((data) => {
+      createLog(
+        "CREATEUSERS",
+        `CREATEUSERSSUCCESS-${req.query.id || "IDNOTFOUND"}`,
+        JSON.stringify(data),
+        "LAS",
+        auth && auth.username !== '' || 'system'
+      );
+      res.send({ success: true, data: data });
+    })
+    .catch((err) => {
+      createLog(
+        "CREATEUSERS",
+        `CREATEUSERSFAILED-${req.query.id || "IDNOTFOUND"}`,
+        JSON.stringify(err),
+        "LAS",
+        auth && auth.username !== '' || 'system'
+      );
+      res.send({ success: false, error: err.message });
+    });
+});
+
+/**
+ * Login
+ */
 app.post("/login", (req, res) => {
+  let auth = currentUser(req.headers.authorization);
   let { username, password } = { ...req.body };
   Users.findAll({ where: { username, password } }).then((user) => {
     let usersList = JSON.parse(JSON.stringify(user));
@@ -161,7 +198,7 @@ app.post("/login", (req, res) => {
         `LOGINSUCCESS-${username}`,
         JSON.stringify({ ...req.body }),
         "LAS",
-        "raihan"
+        auth && auth.username !== '' || 'system'
       );
       let user = usersList[0];
       res.send({
@@ -179,7 +216,7 @@ app.post("/login", (req, res) => {
         `LOGINSFAILED-${username}`,
         JSON.stringify({ ...req.body }),
         "LAS",
-        "raihan"
+        auth && auth.username !== '' || 'system'
       );
       res.send({ success: false });
     }
@@ -190,13 +227,16 @@ app.post("/login", (req, res) => {
  * Employees
  */
 app.get("/employee", (req, res) => {
-  Employee.findAll({ where: { ...req.query } }).then((employees) => {
-    let employeeList = JSON.parse(JSON.stringify(employees));
-    return res.json(employeeList);
-  });
+  Employee.findAll({ where: { ...req.query }, order: [["id", "ASC"]] }).then(
+    (employees) => {
+      let employeeList = JSON.parse(JSON.stringify(employees));
+      return res.json(employeeList);
+    }
+  );
 });
 
 app.post("/employees", (req, res) => {
+  let auth = currentUser(req.headers.authorization);
   let data = { ...req.body };
   data.createdAt = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
   data.updatedAt = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
@@ -207,8 +247,8 @@ app.post("/employees", (req, res) => {
         `CREATEEMPLOYEESUCCESS-${req.query.id || "IDNOTFOUND"}`,
         JSON.stringify(data),
         "LAS",
-        "raihan"
-      ); // 'LAS' and 'raihan' pull from header
+        auth && auth.username !== '' || 'system'
+      );
       res.send({ success: true, data: data });
     })
     .catch((err) => {
@@ -217,13 +257,14 @@ app.post("/employees", (req, res) => {
         `CREATEEMPLOYEEFAILED-${req.query.id || "IDNOTFOUND"}`,
         JSON.stringify(err),
         "LAS",
-        "raihan"
-      ); // 'LAS' and 'raihan' pull from header
+        auth && auth.username !== '' || 'system'
+      );
       res.send({ success: false, error: err.message });
     });
 });
 
 app.put("/employees", (req, res) => {
+  let auth = currentUser(req.headers.authorization);
   Employee.findOne({ where: { id: req.query.id } })
     .then((employee) => {
       if (employee) {
@@ -235,7 +276,7 @@ app.put("/employees", (req, res) => {
               `UPDATEEMPLOYEESUCCECSS-${req.query.id}`,
               JSON.stringify(data),
               "LAS",
-              "raihan"
+              auth && auth.username !== '' || 'system'
             );
             res.send({ success: true, data: data });
           })
@@ -245,7 +286,7 @@ app.put("/employees", (req, res) => {
               `UPDATEEMPLOYEEFAILED-${req.query.id}`,
               JSON.stringify(err),
               "LAS",
-              "raihan"
+              auth && auth.username !== '' || 'system'
             );
             res.send({ success: false, error: err });
           });
@@ -255,7 +296,7 @@ app.put("/employees", (req, res) => {
           `NOTFOUND-${req.query.id}`,
           JSON.stringify(err),
           "LAS",
-          "raihan"
+          auth && auth.username !== '' || 'system'
         );
         res.send({
           success: false,
@@ -269,7 +310,7 @@ app.put("/employees", (req, res) => {
         `ERROR-${req.query.id}`,
         JSON.stringify(err),
         "LAS",
-        "raihan"
+        auth && auth.username !== '' || 'system'
       );
       res.send({ success: false, error: err });
     });
@@ -281,7 +322,7 @@ app.delete("/employees", (req, res) => {
     `DELETEEMPLOYEESATTEMPT-${req.query.id}`,
     JSON.stringify(err),
     "LAS",
-    "raihan"
+    auth && auth.username !== '' || 'system'
   );
   return res.send({ success: false, error: "DELETE not implemented yet!" });
 });
@@ -290,14 +331,15 @@ app.delete("/employees", (req, res) => {
  * Logs
  */
 async function createLog(
-  log_type,
+  action,
   collateid,
   data,
   application_source,
   createdBy
 ) {
-  let logdata = { log_type, collateid, data, application_source, createdBy };
+  let logdata = { action, collateid, data, obj: application_source, createdBy };
   logdata.createdAt = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+  logdata.updatedAt = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
   Logs.create(logdata)
     .then((data) => {
       return { success: true, data: data };
@@ -343,6 +385,7 @@ app.get("/application", (req, res) => {
 });
 
 app.post("/application", (req, res) => {
+  let auth = currentUser(req.headers.authorization);
   let data = { ...req.body };
   data.collateid = uuidv4();
   data.createdAt = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
@@ -355,7 +398,7 @@ app.post("/application", (req, res) => {
         `CREATEAPPLICATIONSUCCESS-${data.collateid}`,
         JSON.stringify(data),
         "LAS",
-        "raihan"
+        auth && auth.username !== '' || 'system'
       );
       return data;
       //res.send({ success: true, data: data });
@@ -373,7 +416,8 @@ app.post("/application", (req, res) => {
         .then((appform) => {
           data.application_data = JSON.parse(data.application_data);
           let approvers = appform[0].data.approvers;
-          approvers.immediate_supervisor = data.application_data.immediate_supervisor;
+          approvers.immediate_supervisor =
+            data.application_data.immediate_supervisor;
           approvers.project_manager = data.application_data.project_manager;
 
           Object.keys(approvers).map((k, v) => {
@@ -396,13 +440,14 @@ app.post("/application", (req, res) => {
         `CREATEAPPLICATIONFAILED-${data.collateid}`,
         JSON.stringify(err),
         "LAS",
-        "raihan"
+        auth && auth.username !== '' || 'system'
       );
       res.send({ success: false, error: err.message });
     });
 });
 
 app.put("/application", (req, res) => {
+  let auth = currentUser(req.headers.authorization);
   let data = { ...req.body };
   data.application_data = JSON.stringify(data.application_data);
   Application.findOne({ where: { id: req.query.id } })
@@ -416,7 +461,7 @@ app.put("/application", (req, res) => {
               `UPDATEAPPLICATIONSUCCESS-${req.query.id}`,
               JSON.stringify(err),
               "LAS",
-              "raihan"
+              auth && auth.username !== '' || 'system'
             );
             res.send({ success: true, data: data });
           })
@@ -426,7 +471,7 @@ app.put("/application", (req, res) => {
               `UPDATEAPPLICATIONFAILED-${req.query.id}`,
               JSON.stringify(err),
               "LAS",
-              "raihan"
+              auth && auth.username !== '' || 'system'
             );
             res.send({ success: false, error: err });
           });
@@ -436,7 +481,7 @@ app.put("/application", (req, res) => {
           `NOTFOUND-${req.query.id}`,
           JSON.stringify(err),
           "LAS",
-          "raihan"
+          auth && auth.username !== '' || 'system'
         );
         res.send({
           success: false,
@@ -450,7 +495,7 @@ app.put("/application", (req, res) => {
         `ERROR-${req.query.id}`,
         JSON.stringify(err),
         "LAS",
-        "raihan"
+        auth && auth.username !== '' || 'system'
       );
       res.send({ success: false, error: err });
     });
@@ -462,7 +507,7 @@ app.delete("/application", (req, res) => {
     `DELETEAPPLICATIONATTEMPT-${req.query.id}`,
     JSON.stringify(err),
     "LAS",
-    "raihan"
+    auth && auth.username !== '' || 'system'
   );
   return res.send({ success: false, error: "DELETE not implemented yet!" });
 });
@@ -478,6 +523,7 @@ app.get("/approvals", (req, res) => {
 });
 
 app.post("/approvals", (req, res) => {
+  let auth = currentUser(req.headers.authorization);
   let data = { ...req.body };
   data.collateid = uuidv4();
   data.createdAt = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
@@ -489,7 +535,7 @@ app.post("/approvals", (req, res) => {
         `CREATEAPPROVALSSUCCESS-${data.collateid}`,
         JSON.stringify(data),
         "LAS",
-        "raihan"
+        auth && auth.username !== '' || 'system'
       );
       res.send({ success: true, data: data });
     })
@@ -499,13 +545,14 @@ app.post("/approvals", (req, res) => {
         `ERROR-${data.collateid}`,
         JSON.stringify(data),
         "LAS",
-        "raihan"
+        auth && auth.username !== '' || 'system'
       );
       res.send({ success: false, error: err.message });
     });
 });
 
 app.put("/approvals", (req, res) => {
+  let auth = currentUser(req.headers.authorization);
   let { status, updatedAt } = { ...req.body }; //only use status for update
   updatedAt = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
   Approvals.findOne({ where: { id: req.query.id } })
@@ -519,7 +566,7 @@ app.put("/approvals", (req, res) => {
               `UPDATEAPPROVALSSUCCESS-${req.query.id}`,
               JSON.stringify(data),
               "LAS",
-              "raihan"
+              auth && auth.username !== '' || 'system'
             );
             res.send({ success: true, data: data });
           })
@@ -529,7 +576,7 @@ app.put("/approvals", (req, res) => {
               `CREATEAPPROVALSFAILED-${req.query.id}`,
               JSON.stringify(data),
               "LAS",
-              "raihan"
+              auth && auth.username !== '' || 'system'
             );
             res.send({ success: false, error: err });
           });
@@ -539,7 +586,7 @@ app.put("/approvals", (req, res) => {
           `NOTFOUND-${req.query.id}`,
           JSON.stringify(data),
           "LAS",
-          "raihan"
+          auth && auth.username !== '' || 'system'
         );
         res.send({
           success: false,
