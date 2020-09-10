@@ -51,11 +51,11 @@ const Users = sequelize.define(
       type: DataTypes.DATE,
       allowNull: false,
     },
-    createdBy: {
+    updatedBy: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    createdAt: {
+    updatedAt: {
       type: DataTypes.DATE,
       allowNull: false,
     },

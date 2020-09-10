@@ -14,6 +14,7 @@ import Application from "./models/application";
 import Approvals from "./models/approvals";
 import Logs from "./models/applog";
 import Users from "./models/users";
+import Comments from "./models/comments";
 import ApplicationForm from "./models/application_form";
 
 import express from "express";
@@ -147,12 +148,51 @@ app.post("/upload/signature", signature.single("upload_image"), (req, res) => {
 });
 
 /**
+ * Comments
+ */
+app.get("/comments", (req, res) => {
+  Comments.findAll({ where: { ...req.query } }).then((comment) => {
+    let commentsList = JSON.parse(JSON.stringify(comment));
+    return res.json(commentsList);
+  });
+});
+
+app.post("/comments", (req, res) => {
+  let auth = currentUser(req.headers.authorization);
+  let data = { ...req.body };
+  console.log(data)
+  data.createdAt = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+  data.updatedAt = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+  Comments.create(data)
+    .then((data) => {
+      createLog(
+        "CREATECOMMENTS",
+        `CREATECOMMENTSSUCCESS-${req.query.id || "IDNOTFOUND"}`,
+        JSON.stringify(data),
+        "LAS",
+        auth && auth.username !== '' || 'system'
+      );
+      res.send({ success: true, data: data });
+    })
+    .catch((err) => {
+      createLog(
+        "CREATECOMMENTS",
+        `CREATECOMMENTSFAILED-${req.query.id || "IDNOTFOUND"}`,
+        JSON.stringify(err),
+        "LAS",
+        auth && auth.username !== '' || 'system'
+      );
+      res.send({ success: false, error: err.message });
+    });
+});
+
+/**
  * Users
  */
 app.post("/users", (req, res) => {
   Users.findAll({ where: { ...req.query } }).then((user) => {
-    let uersList = JSON.parse(JSON.stringify(user));
-    return res.json(uersList);
+    let userList = JSON.parse(JSON.stringify(user));
+    return res.json(userList);
   });
 });
 
