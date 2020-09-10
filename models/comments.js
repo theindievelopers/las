@@ -10,28 +10,24 @@ var sequelize = new Sequelize("BOOMDB", "root", "Qwer1234", {
   },
 });
 
-const Logs = sequelize.define(
-  "logs",
+const Comments = sequelize.define(
+  "comments",
   {
     id: {
       type: DataTypes.INTEGER,
-      primaryKey: true,
       autoIncrement: true,
-      allowNull: false,
-    },
-    action: {
-      type: DataTypes.STRING,
+      primaryKey: true,
       allowNull: false,
     },
     collateid: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV1,
-    },
-    data: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    obj: {
+    employeecode: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    comment: {
       type: DataTypes.STRING,
       allowNull: false,
     },
@@ -41,6 +37,10 @@ const Logs = sequelize.define(
     },
     createdAt: {
       type: DataTypes.DATE,
+      allowNull: false,
+    },
+    updatedBy: {
+      type: DataTypes.STRING,
       allowNull: false,
     },
     updatedAt: {
@@ -53,4 +53,4 @@ const Logs = sequelize.define(
   }
 );
 
-export default Logs;
+export default Comments;
