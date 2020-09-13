@@ -28,6 +28,10 @@ const Approvals = sequelize.define(
       type: DataTypes.STRING, //employee code
       allowNull: false,
     },
+    application_type: {
+      type: DataTypes.STRING, //employee code
+      allowNull: false,
+    },
     status: {
       type: DataTypes.INTEGER,
       allowNull: false,
