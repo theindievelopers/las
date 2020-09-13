@@ -464,6 +464,7 @@ app.post("/application", (req, res) => {
             Approvals.create({
               collateid: data.collateid,
               approver_id: approvers[k],
+              application_type: data.application_form_code,
               status: "PENDING",
               createdBy: "system",
               updatedBy: "system",
