@@ -105,6 +105,9 @@ const Employee = sequelize.define(
     medical_allowance: {
       type: DataTypes.DOUBLE,
     },
+    housing_allowance: {
+      type: DataTypes.DOUBLE,
+    },
     total: {
       type: DataTypes.DOUBLE,
     },
