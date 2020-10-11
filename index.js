@@ -224,6 +224,61 @@ app.post("/users/create", (req, res) => {
     });
 });
 
+app.put("/users", (req, res) => {
+  let auth = currentUser(req.headers.authorization);
+  let data = { ...req.body };
+  Users.findOne({ where: { id: req.query.id } })
+    .then((user) => {
+      if (user) {
+        user
+          .update(data, { where: { id: user.id } })
+          .then((data) => {
+            createLog(
+              "UPDATEUSERS",
+              `UPDATEUSERSSUCCESS-${req.query.id}`,
+              JSON.stringify(data),
+              "LAS",
+              (auth && auth.username !== "") || "system"
+            );
+            res.send({ success: true, data: data });
+          })
+          .catch((err) => {
+            createLog(
+              "UPDATEUSERS",
+              `UPDATEUSERSFAILED-${req.query.id}`,
+              JSON.stringify(err),
+              "LAS",
+              (auth && auth.username !== "") || "system"
+            );
+            res.send({ success: false, error: err });
+          });
+      } else {
+        createLog(
+          "UPDATEUSERS",
+          `NOTFOUND-${req.query.id}`,
+          JSON.stringify({ ...req.body }),
+          "LAS",
+          (auth && auth.username !== "") || "system"
+        );
+        res.send({
+          success: false,
+          error: `Object reference id ${req.query.id} not found.`,
+        });
+      }
+    })
+    .catch((err) => {
+      createLog(
+        "UPDATEUSERS",
+        `ERROR-${req.query.id}`,
+        JSON.stringify(err),
+        "LAS",
+        (auth && auth.username !== "") || "system"
+      );
+      res.send({ success: false, error: err });
+    });
+});
+
+
 /**
  * Login
  */
